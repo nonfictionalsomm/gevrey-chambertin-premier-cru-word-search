@@ -49,7 +49,6 @@
             justify-content: center;
             align-items: center;
             aspect-ratio: 1 / 1;
-            /* FIX: More aggressive font scaling for mobile */
             font-size: clamp(6px, 2.5vw, 16px);
             text-transform: uppercase;
             font-weight: 600;
@@ -64,7 +63,6 @@
             background-color: #FBBF24; /* amber-400 */
             color: #1F2937;
         }
-        /* FIX: New class for the first letter clicked */
         .first-click {
             background-color: #FDE68A; /* amber-200 */
             color: #1F2937;
@@ -89,7 +87,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
 
-    <!-- FIX: Reduced padding on mobile for more grid space -->
     <div class="max-w-7xl mx-auto p-2 sm:p-4 lg:p-8">
         <header class="text-center mb-4 sm:mb-8">
             <h1 class="text-3xl sm:text-5xl font-bold lora text-gray-900">Le Mot Caché</h1>
@@ -127,7 +124,7 @@
         <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md m-4 transform transition-all" id="modal-content">
             <div class="p-8">
                 <h3 id="modal-word" class="text-3xl font-bold lora text-indigo-600 mb-6 text-center"></h3>
-                <div id="modal-info" class="text-gray-700 text-left space-y-3">
+                <div id="modal-info" class="text-gray-700 text-left space-y-4">
                     <!-- Content will be injected by JS -->
                 </div>
                 <button id="modal-continue-btn" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
@@ -165,7 +162,32 @@
 
         // --- GAME DATA ---
         const wordData = [
-            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze" } }, { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy" } }, { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume" } }, { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot" } }, { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot" } }, { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)" } }, { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)" } }, { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy" } }, { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin" } }, { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot" } }, { term: "Ergot", info: { size: "1.16 ha", producers: "No producer currently bottles a wine labeled En Ergot; however Domaine Trapet bottles it as 1er" } }, { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin" } }, { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty" } }, { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)" } }, { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)" } }, { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier" } }, { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy" } }, { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)" } }, { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat" } }, { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot" } }, { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet" } }, { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet" } }, { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier" } }, { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Petite Chapelle" } }, { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot" } }, { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot" } }
+            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze", origin: "Closeau comes from clos." } },
+            { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy", origin: "Derived from combe, meaning valley." } },
+            { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume", origin: "Bel stems from Latin *bellus* (beautiful), referencing the site's pure air." } },
+            { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot", origin: "Champ = field; Ponnet’s field." } },
+            { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot", origin: "From Latin *caribaudia* (cemetery); possibly Gevrey’s first burial site." } },
+            { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)", origin: "Varoilles means small valley." } },
+            { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)", origin: "Formerly owned by the Diocese of Langres (Chapitre)." } },
+            { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy", origin: "Belonged to a prieur—linked to Cluny Abbey." } },
+            { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin", origin: "Named for a statue of Saint James guiding pilgrims." } },
+            { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot", origin: "Combines *crai* (chalk) and *pillot* (stone)." } },
+            { term: "Ergot", info: { size: "1.16 ha", producers: "No producer currently bottles a wine labeled En Ergot; however Domaine Trapet bottles it as 1er", origin: "Refers to the pointed, spur-like shape of the climat." } },
+            { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin", origin: "Estournelles were towered fortifications." } },
+            { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty", origin: "Shares roots with *fountain*." } },
+            { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)", origin: "From *essarter*—to clear forest." } },
+            { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)", origin: "Boissière = bush." } },
+            { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier", origin: "Valley owned by Benedictines of Cluny until the Revolution." } },
+            { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy", origin: "Named for quarry worker (*perrier*)." } },
+            { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)", origin: "Evokes Roman viticulture; linked to Gevrey’s *rue des Vignes Romaines*." } },
+            { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat", origin: "Lavaux stems from Latin *vallis* (valley)." } },
+            { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot", origin: "From Latin *castellum* (fortress)." } },
+            { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet", origin: "Champeaux = meadow." } },
+            { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet", origin: "Corbeau = raven." } },
+            { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier", origin: "From *goule* (stream); *gouléyant* now implies diluted wine." } },
+            { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Petite Chapelle", origin: "Smaller parcel north of Cazetiers; name from Latin *castellum* (fortress)." } },
+            { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot", origin: "Lies just below Chapelle-Chambertin." } },
+            { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot", origin: "Poissonet means fish pond." } }
         ];
         
         // --- GAME STATE ---
@@ -176,7 +198,7 @@
         let selectionStart = null;
         let selectionEnd = null;
         let foundWords = new Set();
-        let firstClickCell = null; // FIX: New state for click-click logic
+        let firstClickCell = null;
 
         // --- GAME LOGIC ---
         function sanitizeWord(word) {
@@ -307,7 +329,6 @@
             return { row: parseInt(cellElement.dataset.row), col: parseInt(cellElement.dataset.col), element: cellElement };
         }
 
-        // FIX: Reworked event handlers for click-click and drag
         function handleInteractionStart(e) {
             e.preventDefault();
             const cell = getCellFromEvent(e);
@@ -323,7 +344,6 @@
             const cell = getCellFromEvent(e);
             if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                 selectionEnd = cell;
-                // If we are dragging, it's not a click-click, so clear the first click state
                 clearFirstClickHighlight();
                 firstClickCell = null;
                 highlightSelection();
@@ -334,31 +354,23 @@
             if (!isSelecting) return;
             e.preventDefault();
             isSelecting = false;
-
-            // Check if it was a drag or a click
             const isDrag = selectionStart.row !== selectionEnd.row || selectionStart.col !== selectionEnd.col;
-
             if (isDrag) {
                 checkSelection();
                 clearSelectionHighlights();
-            } else { // It was a click
+            } else {
                 handleCellClick(selectionStart);
             }
         }
 
         function handleCellClick(cell) {
             if (!firstClickCell) {
-                // This is the first click
                 firstClickCell = cell;
                 cell.element.classList.add('first-click');
             } else {
-                // This is the second click
-                // Temporarily set selectionStart and selectionEnd for checkSelection
                 selectionStart = firstClickCell;
                 selectionEnd = cell;
                 checkSelection();
-                
-                // Reset for the next selection
                 clearFirstClickHighlight();
                 firstClickCell = null;
             }
@@ -446,7 +458,21 @@
 
         function showDefinitionModal(word) {
             modalWord.textContent = word.term;
-            modalInfo.innerHTML = `<div><span class="font-semibold text-gray-900">Size:</span> <span>${word.info.size}</span></div><div><span class="font-semibold text-gray-900">Major Producers:</span><p class="mt-1 text-gray-600">${word.info.producers}</p></div>`;
+            // FIX: Removed the 'italic' class from the origin paragraph
+            modalInfo.innerHTML = `
+                <div>
+                    <span class="font-semibold text-gray-900">Origin of the Name:</span>
+                    <p class="mt-1 text-gray-600">${word.info.origin}</p>
+                </div>
+                <div>
+                    <span class="font-semibold text-gray-900">Size:</span>
+                    <span>${word.info.size}</span>
+                </div>
+                <div>
+                    <span class="font-semibold text-gray-900">Major Producers:</span>
+                    <p class="mt-1 text-gray-600">${word.info.producers}</p>
+                </div>
+            `;
             definitionModal.classList.remove('hidden');
         }
 
