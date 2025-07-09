@@ -209,6 +209,7 @@
             return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(fillValue));
         }
 
+        // FIX: Improved placement algorithm for better variety
         function placeWordsInGrid() {
             const directions = [ { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }, { x: 1, y: 1 }, { x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 } ];
             const sortedWords = [...words].sort((a, b) => b.sanitized.length - a.sanitized.length);
@@ -216,24 +217,44 @@
             for (const wordObj of sortedWords) {
                 const word = wordObj.sanitized;
                 wordObj.placed = false;
-                let attempts = 0;
-                while (!wordObj.placed && attempts < 200) {
-                    const dir = directions[Math.floor(Math.random() * directions.length)];
-                    const startRow = Math.floor(Math.random() * GRID_SIZE);
-                    const startCol = Math.floor(Math.random() * GRID_SIZE);
-                    if (canPlaceWord(word, startRow, startCol, dir)) {
-                        for (let i = 0; i < word.length; i++) {
-                            grid[startRow + i * dir.y][startCol + i * dir.x] = word[i];
-                        }
-                        wordObj.placed = true;
-                        wordObj.start = { row: startRow, col: startCol };
-                        wordObj.end = { 
-                            row: startRow + (word.length - 1) * dir.y, 
-                            col: startCol + (word.length - 1) * dir.x 
-                        };
+                let placementAttempts = 0;
+                
+                // Create a shuffled list of all possible start cells
+                const startCells = [];
+                for(let r=0; r<GRID_SIZE; r++) {
+                    for(let c=0; c<GRID_SIZE; c++) {
+                        startCells.push({r, c});
                     }
-                    attempts++;
                 }
+                shuffle(startCells);
+
+                for (const startCell of startCells) {
+                    if (wordObj.placed) break;
+                    
+                    shuffle(directions); // Shuffle directions for each start cell
+                    for (const dir of directions) {
+                        if (canPlaceWord(word, startCell.r, startCell.c, dir)) {
+                            for (let i = 0; i < word.length; i++) {
+                                grid[startCell.r + i * dir.y][startCell.c + i * dir.x] = word[i];
+                            }
+                            wordObj.placed = true;
+                            wordObj.start = { row: startCell.r, col: startCell.c };
+                            wordObj.end = { 
+                                row: startCell.r + (word.length - 1) * dir.y, 
+                                col: startCell.c + (word.length - 1) * dir.x 
+                            };
+                            break; // Move to the next word
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Helper function to shuffle arrays
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
         }
 
@@ -384,54 +405,30 @@
             drawWordOutline(cells);
             renderWordList();
             showDefinitionModal(word);
-            if (foundWords.size === words.filter(w => w.placed).length) {
-                setTimeout(() => winModal.classList.remove('hidden'), 500);
-            }
+            // FIX: Win condition check is now moved to hideDefinitionModal
         }
 
-        // FIX: Reworked outline drawing logic for accuracy
         function drawWordOutline(cells) {
             const startCell = gridElement.querySelector(`[data-row='${cells[0].row}'][data-col='${cells[0].col}']`);
             const endCell = gridElement.querySelector(`[data-row='${cells[cells.length - 1].row}'][data-col='${cells[cells.length - 1].col}']`);
 
             if (!startCell || !endCell) return;
-
-            // Use offsetLeft/Top for positioning relative to the parent container
             const cellWidth = startCell.offsetWidth;
             const cellHeight = startCell.offsetHeight;
-
-            const startCenter = {
-                x: startCell.offsetLeft + cellWidth / 2,
-                y: startCell.offsetTop + cellHeight / 2
-            };
-            const endCenter = {
-                x: endCell.offsetLeft + cellWidth / 2,
-                y: endCell.offsetTop + cellHeight / 2
-            };
-
+            const startCenter = { x: startCell.offsetLeft + cellWidth / 2, y: startCell.offsetTop + cellHeight / 2 };
+            const endCenter = { x: endCell.offsetLeft + cellWidth / 2, y: endCell.offsetTop + cellHeight / 2 };
             const angle = Math.atan2(endCenter.y - startCenter.y, endCenter.x - startCenter.x);
             const distance = Math.hypot(endCenter.x - startCenter.x, endCenter.y - startCenter.y);
-
             const outlineWidth = distance + cellWidth;
             const outlineHeight = cellHeight * 0.9;
-
-            const midPoint = {
-                x: (startCenter.x + endCenter.x) / 2,
-                y: (startCenter.y + endCenter.y) / 2,
-            };
-
+            const midPoint = { x: (startCenter.x + endCenter.x) / 2, y: (startCenter.y + endCenter.y) / 2, };
             const outline = document.createElement('div');
             outline.classList.add('word-outline');
             outline.style.width = `${outlineWidth}px`;
             outline.style.height = `${outlineHeight}px`;
-
-            // Position the outline's top-left corner based on its center being at the midpoint
             outline.style.left = `${midPoint.x - outlineWidth / 2}px`;
             outline.style.top = `${midPoint.y - outlineHeight / 2}px`;
-            
-            // Rotate around the center
             outline.style.transform = `rotate(${angle}rad)`;
-
             outlineContainer.appendChild(outline);
         }
 
@@ -444,6 +441,11 @@
 
         function hideDefinitionModal() {
             definitionModal.classList.add('hidden');
+            // FIX: Check for win condition AFTER closing the modal
+            if (foundWords.size === words.filter(w => w.placed).length) {
+                // Use a short timeout to allow the definition modal to animate out gracefully
+                setTimeout(() => winModal.classList.remove('hidden'), 200);
+            }
         }
         
         function resetAndStartNewGame() {
