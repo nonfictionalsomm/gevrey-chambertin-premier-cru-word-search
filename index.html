@@ -49,7 +49,8 @@
             justify-content: center;
             align-items: center;
             aspect-ratio: 1 / 1;
-            font-size: clamp(8px, 2.5vw, 16px);
+            /* FIX: More aggressive font scaling for mobile */
+            font-size: clamp(6px, 2.5vw, 16px);
             text-transform: uppercase;
             font-weight: 600;
             color: #374151;
@@ -60,7 +61,12 @@
             z-index: 1;
         }
         .selecting {
-            background-color: #FBBF24;
+            background-color: #FBBF24; /* amber-400 */
+            color: #1F2937;
+        }
+        /* FIX: New class for the first letter clicked */
+        .first-click {
+            background-color: #FDE68A; /* amber-200 */
             color: #1F2937;
         }
         .word-list-item.found {
@@ -83,15 +89,16 @@
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
 
-    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-8">
-            <h1 class="text-4xl sm:text-5xl font-bold lora text-gray-900">Le Mot Caché</h1>
-            <p class="mt-2 text-lg text-gray-600">Premier Crus of Gevrey-Chambertin</p>
+    <!-- FIX: Reduced padding on mobile for more grid space -->
+    <div class="max-w-7xl mx-auto p-2 sm:p-4 lg:p-8">
+        <header class="text-center mb-4 sm:mb-8">
+            <h1 class="text-3xl sm:text-5xl font-bold lora text-gray-900">Le Mot Caché</h1>
+            <p class="mt-2 text-base sm:text-lg text-gray-600">Premier Crus of Gevrey-Chambertin</p>
         </header>
 
-        <main class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <main class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
             <!-- Game Grid -->
-            <div id="game-container" class="lg:col-span-3 bg-white p-4 rounded-xl shadow-lg border border-gray-200">
+            <div id="game-container" class="lg:col-span-3 bg-white p-2 sm:p-4 rounded-xl shadow-lg border border-gray-200">
                 <div id="game-grid-wrapper">
                     <div id="game-grid" class="rounded-lg overflow-hidden"></div>
                     <div id="outline-container"></div>
@@ -99,14 +106,14 @@
             </div>
 
             <!-- Word List & Controls -->
-            <aside class="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                <h2 class="text-2xl font-bold lora mb-4">Vineyards to Find</h2>
-                <div id="word-list-container" class="h-96 overflow-y-auto pr-2">
-                   <ul id="word-list" class="space-y-2 text-gray-700">
+            <aside class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200">
+                <h2 class="text-xl sm:text-2xl font-bold lora mb-4">Vineyards to Find</h2>
+                <div id="word-list-container" class="h-80 sm:h-96 overflow-y-auto pr-2">
+                   <ul id="word-list" class="space-y-2 text-sm sm:text-base text-gray-700">
                        <!-- Word list will be populated by JS -->
                    </ul>
                 </div>
-                <div class="mt-6">
+                <div class="mt-4 sm:mt-6">
                     <button id="reset-button" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                         New Game
                     </button>
@@ -169,6 +176,7 @@
         let selectionStart = null;
         let selectionEnd = null;
         let foundWords = new Set();
+        let firstClickCell = null; // FIX: New state for click-click logic
 
         // --- GAME LOGIC ---
         function sanitizeWord(word) {
@@ -182,6 +190,8 @@
             words.forEach(w => w.sanitized = sanitizeWord(w));
             
             outlineContainer.innerHTML = '';
+            clearFirstClickHighlight();
+            firstClickCell = null;
             
             let allWordsPlaced = false;
             let placementAttempts = 0;
@@ -209,7 +219,6 @@
             return Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(fillValue));
         }
 
-        // FIX: Improved placement algorithm for better variety
         function placeWordsInGrid() {
             const directions = [ { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: 1 }, { x: 0, y: -1 }, { x: 1, y: 1 }, { x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 } ];
             const sortedWords = [...words].sort((a, b) => b.sanitized.length - a.sanitized.length);
@@ -217,40 +226,28 @@
             for (const wordObj of sortedWords) {
                 const word = wordObj.sanitized;
                 wordObj.placed = false;
-                let placementAttempts = 0;
                 
-                // Create a shuffled list of all possible start cells
                 const startCells = [];
-                for(let r=0; r<GRID_SIZE; r++) {
-                    for(let c=0; c<GRID_SIZE; c++) {
-                        startCells.push({r, c});
-                    }
-                }
+                for(let r=0; r<GRID_SIZE; r++) for(let c=0; c<GRID_SIZE; c++) startCells.push({r, c});
                 shuffle(startCells);
 
                 for (const startCell of startCells) {
                     if (wordObj.placed) break;
                     
-                    shuffle(directions); // Shuffle directions for each start cell
+                    shuffle(directions);
                     for (const dir of directions) {
                         if (canPlaceWord(word, startCell.r, startCell.c, dir)) {
-                            for (let i = 0; i < word.length; i++) {
-                                grid[startCell.r + i * dir.y][startCell.c + i * dir.x] = word[i];
-                            }
+                            for (let i = 0; i < word.length; i++) grid[startCell.r + i * dir.y][startCell.c + i * dir.x] = word[i];
                             wordObj.placed = true;
                             wordObj.start = { row: startCell.r, col: startCell.c };
-                            wordObj.end = { 
-                                row: startCell.r + (word.length - 1) * dir.y, 
-                                col: startCell.c + (word.length - 1) * dir.x 
-                            };
-                            break; // Move to the next word
+                            wordObj.end = { row: startCell.r + (word.length - 1) * dir.y, col: startCell.c + (word.length - 1) * dir.x };
+                            break;
                         }
                     }
                 }
             }
         }
         
-        // Helper function to shuffle arrays
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -259,30 +256,21 @@
         }
 
         function canPlaceWord(word, startRow, startCol, dir) {
-            let overlapCount = 0;
             for (let i = 0; i < word.length; i++) {
                 const row = startRow + i * dir.y;
                 const col = startCol + i * dir.x;
                 if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) return false;
                 const cell = grid[row][col];
-                if (cell !== null) {
-                    if(cell !== word[i]) return false;
-                    overlapCount++;
-                }
+                if (cell !== null && cell !== word[i]) return false;
             }
-            return overlapCount <= 1;
+            return true;
         }
 
         function fillEmptyCells() {
             const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            for (let r = 0; r < GRID_SIZE; r++) {
-                for (let c = 0; c < GRID_SIZE; c++) {
-                    if (grid[r][c] === null) grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
-                }
-            }
+            for (let r = 0; r < GRID_SIZE; r++) for (let c = 0; c < GRID_SIZE; c++) if (grid[r][c] === null) grid[r][c] = alphabet[Math.floor(Math.random() * alphabet.length)];
         }
 
-        // --- RENDERING ---
         function renderGrid() {
             gridElement.innerHTML = '';
             gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
@@ -310,28 +298,23 @@
             });
         }
         
-        // --- EVENT HANDLING ---
         function getCellFromEvent(e) {
             let target;
-            if (e.touches && e.touches.length > 0) {
-                target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            } else {
-                target = e.target;
-            }
+            if (e.touches && e.touches.length > 0) target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+            else target = e.target;
             const cellElement = target.closest('.grid-cell');
             if (!cellElement) return null;
-            return { row: parseInt(cellElement.dataset.row), col: parseInt(cellElement.dataset.col) };
+            return { row: parseInt(cellElement.dataset.row), col: parseInt(cellElement.dataset.col), element: cellElement };
         }
 
+        // FIX: Reworked event handlers for click-click and drag
         function handleInteractionStart(e) {
             e.preventDefault();
             const cell = getCellFromEvent(e);
-            if (cell) {
-                isSelecting = true;
-                selectionStart = cell;
-                selectionEnd = cell;
-                highlightSelection();
-            }
+            if (!cell) return;
+            isSelecting = true;
+            selectionStart = cell;
+            selectionEnd = cell;
         }
 
         function handleInteractionMove(e) {
@@ -340,6 +323,9 @@
             const cell = getCellFromEvent(e);
             if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                 selectionEnd = cell;
+                // If we are dragging, it's not a click-click, so clear the first click state
+                clearFirstClickHighlight();
+                firstClickCell = null;
                 highlightSelection();
             }
         }
@@ -348,11 +334,41 @@
             if (!isSelecting) return;
             e.preventDefault();
             isSelecting = false;
-            checkSelection();
-            clearSelectionHighlights();
+
+            // Check if it was a drag or a click
+            const isDrag = selectionStart.row !== selectionEnd.row || selectionStart.col !== selectionEnd.col;
+
+            if (isDrag) {
+                checkSelection();
+                clearSelectionHighlights();
+            } else { // It was a click
+                handleCellClick(selectionStart);
+            }
         }
 
-        // --- SELECTION & HIGHLIGHTING ---
+        function handleCellClick(cell) {
+            if (!firstClickCell) {
+                // This is the first click
+                firstClickCell = cell;
+                cell.element.classList.add('first-click');
+            } else {
+                // This is the second click
+                // Temporarily set selectionStart and selectionEnd for checkSelection
+                selectionStart = firstClickCell;
+                selectionEnd = cell;
+                checkSelection();
+                
+                // Reset for the next selection
+                clearFirstClickHighlight();
+                firstClickCell = null;
+            }
+        }
+        
+        function clearFirstClickHighlight() {
+            const highlighted = document.querySelector('.first-click');
+            if (highlighted) highlighted.classList.remove('first-click');
+        }
+
         function highlightSelection() {
             clearSelectionHighlights();
             const cellsToHighlight = getCellsBetween(selectionStart, selectionEnd);
@@ -374,9 +390,7 @@
             if (r1 === r2 || c1 === c2 || dx === dy) {
                 const sx = Math.sign(c2 - c1), sy = Math.sign(r2 - r1);
                 const steps = Math.max(dx, dy);
-                for (let i = 0; i <= steps; i++) {
-                    cells.push({ row: r1 + i * sy, col: c1 + i * sx });
-                }
+                for (let i = 0; i <= steps; i++) cells.push({ row: r1 + i * sy, col: c1 + i * sx });
             } else {
                 cells.push({ row: r1, col: c1 });
             }
@@ -405,13 +419,11 @@
             drawWordOutline(cells);
             renderWordList();
             showDefinitionModal(word);
-            // FIX: Win condition check is now moved to hideDefinitionModal
         }
 
         function drawWordOutline(cells) {
             const startCell = gridElement.querySelector(`[data-row='${cells[0].row}'][data-col='${cells[0].col}']`);
             const endCell = gridElement.querySelector(`[data-row='${cells[cells.length - 1].row}'][data-col='${cells[cells.length - 1].col}']`);
-
             if (!startCell || !endCell) return;
             const cellWidth = startCell.offsetWidth;
             const cellHeight = startCell.offsetHeight;
@@ -432,7 +444,6 @@
             outlineContainer.appendChild(outline);
         }
 
-        // --- MODAL CONTROLS ---
         function showDefinitionModal(word) {
             modalWord.textContent = word.term;
             modalInfo.innerHTML = `<div><span class="font-semibold text-gray-900">Size:</span> <span>${word.info.size}</span></div><div><span class="font-semibold text-gray-900">Major Producers:</span><p class="mt-1 text-gray-600">${word.info.producers}</p></div>`;
@@ -441,9 +452,7 @@
 
         function hideDefinitionModal() {
             definitionModal.classList.add('hidden');
-            // FIX: Check for win condition AFTER closing the modal
             if (foundWords.size === words.filter(w => w.placed).length) {
-                // Use a short timeout to allow the definition modal to animate out gracefully
                 setTimeout(() => winModal.classList.remove('hidden'), 200);
             }
         }
@@ -453,7 +462,6 @@
             initializeGame();
         }
 
-        // --- EVENT LISTENERS ---
         resetButton.addEventListener('click', initializeGame);
         modalContinueBtn.addEventListener('click', hideDefinitionModal);
         winNewGameBtn.addEventListener('click', resetAndStartNewGame);
@@ -467,7 +475,6 @@
         gridElement.addEventListener('touchend', handleInteractionEnd);
         gridElement.addEventListener('touchcancel', handleInteractionEnd);
 
-        // --- INITIALIZE ---
         initializeGame();
     });
     </script>
