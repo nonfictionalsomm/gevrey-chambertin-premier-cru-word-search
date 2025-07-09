@@ -33,8 +33,7 @@
         }
         #game-grid {
             display: grid;
-            grid-template-columns: repeat(25, 1fr);
-            grid-template-rows: repeat(25, 1fr);
+            /* FIX: Grid dimensions are now set by JavaScript */
             user-select: none;
             touch-action: none;
             padding: 10px;
@@ -131,7 +130,6 @@
                 <div class="text-gray-600 text-lg text-left space-y-4">
                     <p>Find all the Gevrey-Chambertin Premier Cru vineyards hidden in the grid. Words can be found horizontally, vertically, or diagonally, in any direction.</p>
                     
-                    <!-- New Mobile Tip Section -->
                     <div class="mt-4 p-3 bg-indigo-50 rounded-lg text-center text-base">
                         <p><strong>Pro Tip for Mobile:</strong> Rotate your phone horizontally for a better view! You can use the space around the grid to scroll.</p>
                     </div>
@@ -299,6 +297,10 @@
 
         function renderGrid() {
             gridElement.innerHTML = '';
+            // FIX: Dynamically set grid dimensions in JS
+            gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+            gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, 1fr)`;
+
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const cell = document.createElement('div');
@@ -518,5 +520,6 @@
 
 </body>
 </html>
+
 
 
