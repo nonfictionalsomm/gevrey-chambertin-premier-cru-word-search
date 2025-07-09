@@ -16,20 +16,8 @@
         .lora {
             font-family: 'Lora', serif;
         }
-        /* FIX: New wrapper to control aspect ratio and scaling */
-        #grid-aspect-wrapper {
-            width: 100%;
-            max-width: 90vh; /* Prevents grid from becoming excessively large on tall screens */
-            margin: auto;
-            aspect-ratio: 1 / 1;
-            position: relative;
-        }
         #game-grid-wrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: relative;
         }
         #game-grid {
             display: grid;
@@ -38,11 +26,8 @@
             border: 2px solid #D1D5DB;
             user-select: none;
             touch-action: none;
-            padding: 2%; /* Use percentage for padding to scale with the grid */
-            gap: 1%; /* Use percentage for gaps to scale with the grid */
-            height: 100%;
-            width: 100%;
-            box-sizing: border-box;
+            padding: 0.5rem;
+            gap: 2px;
         }
         #outline-container {
             position: absolute;
@@ -50,14 +35,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            pointer-events: none; /* Allows clicks to pass through to the grid */
         }
         .word-outline {
             position: absolute;
-            border: 3px solid #EF4444;
-            border-radius: 9999px;
+            border: 3px solid #EF4444; /* red-500 */
+            border-radius: 9999px; /* Pill shape */
             box-sizing: border-box;
-            transform-origin: center;
+            transform-origin: center; /* Ensure rotation happens around the center */
         }
         .grid-cell {
             display: flex;
@@ -75,11 +60,11 @@
             z-index: 1;
         }
         .selecting {
-            background-color: #FBBF24;
+            background-color: #FBBF24; /* amber-400 */
             color: #1F2937;
         }
         .first-click {
-            background-color: #FDE68A;
+            background-color: #FDE68A; /* amber-200 */
             color: #1F2937;
         }
         .word-list-item.found {
@@ -109,20 +94,20 @@
         </header>
 
         <main class="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-8">
+            <!-- Game Grid -->
             <div id="game-container" class="lg:col-span-3 bg-white p-2 sm:p-4 rounded-xl shadow-lg border border-gray-200">
-                <!-- FIX: Added the new aspect ratio wrapper -->
-                <div id="grid-aspect-wrapper">
-                    <div id="game-grid-wrapper">
-                        <div id="game-grid" class="rounded-lg overflow-hidden"></div>
-                        <div id="outline-container"></div>
-                    </div>
+                <div id="game-grid-wrapper">
+                    <div id="game-grid" class="rounded-lg overflow-hidden"></div>
+                    <div id="outline-container"></div>
                 </div>
             </div>
 
+            <!-- Word List & Controls -->
             <aside class="bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-gray-200">
                 <h2 class="text-xl sm:text-2xl font-bold lora mb-4">Vineyards to Find</h2>
                 <div id="word-list-container" class="h-80 sm:h-96 overflow-y-auto pr-2">
                    <ul id="word-list" class="space-y-2 text-sm sm:text-base text-gray-700">
+                       <!-- Word list will be populated by JS -->
                    </ul>
                 </div>
                 <div class="mt-4 sm:mt-6">
@@ -140,6 +125,7 @@
             <div class="p-8">
                 <h3 id="modal-word" class="text-3xl font-bold lora text-indigo-600 mb-6 text-center"></h3>
                 <div id="modal-info" class="text-gray-700 text-left space-y-4">
+                    <!-- Content will be injected by JS -->
                 </div>
                 <button id="modal-continue-btn" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                     Continue
@@ -162,6 +148,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM ELEMENTS ---
         const gridElement = document.getElementById('game-grid');
         const outlineContainer = document.getElementById('outline-container');
         const wordListElement = document.getElementById('word-list');
@@ -173,10 +160,37 @@
         const winModal = document.getElementById('win-modal');
         const winNewGameBtn = document.getElementById('win-new-game-btn');
 
+        // --- GAME DATA ---
         const wordData = [
-            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze", origin: "Closeau comes from clos." } }, { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy", origin: "Derived from combe, meaning valley." } }, { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume", origin: "Bel stems from Latin *bellus* (beautiful), referencing the site's pure air." } }, { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot", origin: "Champ = field; Ponnet’s field." } }, { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot", origin: "From Latin *caribaudia* (cemetery); possibly Gevrey’s first burial site." } }, { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)", origin: "Varoilles means small valley." } }, { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)", origin: "Formerly owned by the Diocese of Langres (Chapitre)." } }, { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy", origin: "Belonged to a prieur—linked to Cluny Abbey." } }, { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin", origin: "Named for a statue of Saint James guiding pilgrims." } }, { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot", origin: "Combines *crai* (chalk) and *pillot* (stone)." } }, { term: "Ergot", info: { size: "1.16 ha", producers: "Faiveley", origin: "Refers to the pointed, spur-like shape of the climat." } }, { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin", origin: "Estournelles were towered fortifications." } }, { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty", origin: "Shares roots with *fountain*." } }, { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)", origin: "From *essarter*—to clear forest." } }, { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)", origin: "Boissière = bush." } }, { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier", origin: "Valley owned by Benedictines of Cluny until the Revolution." } }, { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy", origin: "Named for quarry worker (*perrier*)." } }, { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)", origin: "Evokes Roman viticulture; linked to Gevrey’s *rue des Vignes Romaines*." } }, { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat", origin: "Lavaux stems from Latin *vallis* (valley)." } }, { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot", origin: "From Latin *castellum* (fortress)." } }, { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet", origin: "Champeaux = meadow." } }, { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet", origin: "Corbeau = raven." } }, { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier", origin: "From *goule* (stream); *gouléyant* now implies diluted wine." } }, { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Petite Chapelle", origin: "Smaller parcel north of Cazetiers; name from Latin *castellum* (fortress)." } }, { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot", origin: "Lies just below Chapelle-Chambertin." } }, { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot", origin: "Poissonet means fish pond." } }
+            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze", origin: "Closeau comes from clos." } },
+            { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy", origin: "Derived from combe, meaning valley." } },
+            { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume", origin: "Bel stems from Latin *bellus* (beautiful), referencing the site's pure air." } },
+            { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot", origin: "Champ = field; Ponnet’s field." } },
+            { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot", origin: "From Latin *caribaudia* (cemetery); possibly Gevrey’s first burial site." } },
+            { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)", origin: "Varoilles means small valley." } },
+            { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)", origin: "Formerly owned by the Diocese of Langres (Chapitre)." } },
+            { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy", origin: "Belonged to a prieur—linked to Cluny Abbey." } },
+            { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin", origin: "Named for a statue of Saint James guiding pilgrims." } },
+            { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot", origin: "Combines *crai* (chalk) and *pillot* (stone)." } },
+            { term: "Ergot", info: { size: "1.16 ha", producers: "No producer currently bottles a wine labeled En Ergot; however Domaine Trapet bottles it as 1er", origin: "Refers to the pointed, spur-like shape of the climat." } },
+            { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin", origin: "Estournelles were towered fortifications." } },
+            { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty", origin: "Shares roots with *fountain*." } },
+            { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)", origin: "From *essarter*—to clear forest." } },
+            { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)", origin: "Boissière = bush." } },
+            { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier", origin: "Valley owned by Benedictines of Cluny until the Revolution." } },
+            { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy", origin: "Named for quarry worker (*perrier*)." } },
+            { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)", origin: "Evokes Roman viticulture; linked to Gevrey’s *rue des Vignes Romaines*." } },
+            { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat", origin: "Lavaux stems from Latin *vallis* (valley)." } },
+            { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot", origin: "From Latin *castellum* (fortress)." } },
+            { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet", origin: "Champeaux = meadow." } },
+            { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet", origin: "Corbeau = raven." } },
+            { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier", origin: "From *goule* (stream); *gouléyant* now implies diluted wine." } },
+            { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Domaine Dominique Gallois. These wines may be blended in with Les Cazetiers and labeled as such.", origin: "Smaller parcel north of Cazetiers; name from Latin *castellum* (fortress)." } },
+            { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot", origin: "Lies just below Chapelle-Chambertin." } },
+            { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot", origin: "Poissonet means fish pond." } }
         ];
         
+        // --- GAME STATE ---
         const GRID_SIZE = 25;
         let grid = [];
         let words = [];
@@ -186,6 +200,7 @@
         let foundWords = new Set();
         let firstClickCell = null;
 
+        // --- GAME LOGIC ---
         function sanitizeWord(word) {
             const normalized = word.term.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             return normalized.toUpperCase().replace(/[^A-Z]/g, '');
@@ -211,7 +226,7 @@
                 placementAttempts++;
             }
             if(!allWordsPlaced) {
-                console.error("Failed to place all words after multiple attempts.");
+                console.error("Failed to place all words after multiple attempts. The word list may be too dense for the grid size.");
                 alert("Error: Could not create the word search. Please try reloading.");
             }
 
@@ -280,6 +295,8 @@
 
         function renderGrid() {
             gridElement.innerHTML = '';
+            gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+            gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, 1fr)`;
             for (let r = 0; r < GRID_SIZE; r++) {
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const cell = document.createElement('div');
@@ -420,39 +437,28 @@
             const startCell = gridElement.querySelector(`[data-row='${cells[0].row}'][data-col='${cells[0].col}']`);
             const endCell = gridElement.querySelector(`[data-row='${cells[cells.length - 1].row}'][data-col='${cells[cells.length - 1].col}']`);
             if (!startCell || !endCell) return;
-            
-            // Use percentage-based positioning relative to the grid container
-            const cellWidthPercent = 100 / GRID_SIZE;
-            
-            const startCenter = {
-                x: (cells[0].col + 0.5) * cellWidthPercent,
-                y: (cells[0].row + 0.5) * cellWidthPercent
-            };
-            const endCenter = {
-                x: (cells[cells.length - 1].col + 0.5) * cellWidthPercent,
-                y: (cells[cells.length - 1].row + 0.5) * cellWidthPercent
-            };
-
+            const cellWidth = startCell.offsetWidth;
+            const cellHeight = startCell.offsetHeight;
+            const startCenter = { x: startCell.offsetLeft + cellWidth / 2, y: startCell.offsetTop + cellHeight / 2 };
+            const endCenter = { x: endCell.offsetLeft + cellWidth / 2, y: endCell.offsetTop + cellHeight / 2 };
             const angle = Math.atan2(endCenter.y - startCenter.y, endCenter.x - startCenter.x);
             const distance = Math.hypot(endCenter.x - startCenter.x, endCenter.y - startCenter.y);
-            
-            const outlineWidth = distance + cellWidthPercent;
-            const outlineHeight = cellWidthPercent * 0.9;
-
-            const midPoint = { x: (startCenter.x + endCenter.x) / 2, y: (startCenter.y + endCenter.y) / 2 };
-            
+            const outlineWidth = distance + cellWidth;
+            const outlineHeight = cellHeight * 0.9;
+            const midPoint = { x: (startCenter.x + endCenter.x) / 2, y: (startCenter.y + endCenter.y) / 2, };
             const outline = document.createElement('div');
             outline.classList.add('word-outline');
-            outline.style.width = `${outlineWidth}%`;
-            outline.style.height = `${outlineHeight}%`;
-            outline.style.left = `${midPoint.x - outlineWidth / 2}%`;
-            outline.style.top = `${midPoint.y - outlineHeight / 2}%`;
+            outline.style.width = `${outlineWidth}px`;
+            outline.style.height = `${outlineHeight}px`;
+            outline.style.left = `${midPoint.x - outlineWidth / 2}px`;
+            outline.style.top = `${midPoint.y - outlineHeight / 2}px`;
             outline.style.transform = `rotate(${angle}rad)`;
             outlineContainer.appendChild(outline);
         }
 
         function showDefinitionModal(word) {
             modalWord.textContent = word.term;
+            // FIX: Removed the 'italic' class from the origin paragraph
             modalInfo.innerHTML = `
                 <div>
                     <span class="font-semibold text-gray-900">Origin of the Name:</span>
@@ -501,4 +507,3 @@
 
 </body>
 </html>
-
