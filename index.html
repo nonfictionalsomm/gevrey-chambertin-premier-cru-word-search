@@ -33,7 +33,6 @@
         }
         #game-grid {
             display: grid;
-            /* FIX: Grid dimensions are now set by JavaScript */
             user-select: none;
             touch-action: none;
             padding: 10px;
@@ -88,6 +87,12 @@
             justify-content: center;
             align-items: center;
             z-index: 50;
+            padding: 1rem;
+        }
+        /* FIX: Added styles for scrollable modal content */
+        .modal-content-box {
+            overflow-y: auto;
+            max-height: 90vh;
         }
     </style>
 </head>
@@ -124,7 +129,8 @@
 
     <!-- Rules Modal -->
     <div id="rules-modal" class="modal-backdrop">
-        <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md m-4 transform transition-all" id="rules-content">
+        <!-- FIX: Added modal-content-box class for scrolling -->
+        <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md m-4 transform transition-all modal-content-box" id="rules-content">
             <div class="p-8 text-center">
                 <h3 class="text-3xl font-bold lora text-indigo-600 mb-4">How to Play</h3>
                 <div class="text-gray-600 text-lg text-left space-y-4">
@@ -151,7 +157,7 @@
 
     <!-- Definition Modal -->
     <div id="definition-modal" class="modal-backdrop hidden">
-        <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md m-4 transform transition-all" id="modal-content">
+        <div class="bg-white rounded-2xl shadow-2xl w-11/12 max-w-md m-4 transform transition-all modal-content-box" id="modal-content">
             <div class="p-8">
                 <h3 id="modal-word" class="text-3xl font-bold lora text-indigo-600 mb-6 text-center"></h3>
                 <div id="modal-info" class="text-gray-700 text-left space-y-4">
@@ -297,7 +303,6 @@
 
         function renderGrid() {
             gridElement.innerHTML = '';
-            // FIX: Dynamically set grid dimensions in JS
             gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
             gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, 1fr)`;
 
@@ -520,6 +525,7 @@
 
 </body>
 </html>
+
 
 
 
