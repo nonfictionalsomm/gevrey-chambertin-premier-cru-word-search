@@ -23,7 +23,7 @@
             max-width: 100%;
             border: 1px solid #e5e7eb; /* Add a border to the scroll area */
             border-radius: 0.5rem;
-            /* FIX: Let the browser handle panning, but prevent default actions when a touch starts ON the grid */
+            /* Allow browser to handle panning, but we will override it with JS for a better experience */
             touch-action: pan-x pan-y; 
         }
         #game-grid, #outline-container {
@@ -55,7 +55,7 @@
             justify-content: center;
             align-items: center;
             aspect-ratio: 1 / 1;
-            font-size: 16px; /* Use a fixed font size for legibility */
+            font-size: 16px;
             text-transform: uppercase;
             font-weight: 600;
             color: #374151;
@@ -136,7 +136,7 @@
                     <p>Find all the Gevrey-Chambertin Premier Cru vineyards hidden in the grid. Words can be found horizontally, vertically, or diagonally, in any direction.</p>
                     
                     <div class="mt-4 p-3 bg-indigo-50 rounded-lg text-center text-base">
-                        <p><strong>Pro Tip for Mobile:</strong> Rotate your phone horizontally for a better view! You can use the space around the grid to scroll.</p>
+                        <p><strong>Pro Tip for Mobile:</strong> Rotate your phone horizontally for a better view! Use two fingers to pan around the grid.</p>
                     </div>
 
                     <div>
@@ -208,12 +208,13 @@
         let foundWords = new Set();
         let firstClickCell = null;
         
-        // FIX: Reworked state management for touch
         let touchState = {
             isDown: false,
             isDragging: false,
+            isPanning: false,
             startPos: { x: 0, y: 0 },
-            startTime: 0
+            panStart: { x: 0, y: 0 },
+            scrollStart: { left: 0, top: 0 },
         };
 
         function sanitizeWord(word) {
@@ -345,6 +346,7 @@
 
         // --- MOUSE EVENT HANDLERS ---
         function handleMouseDown(e) {
+            e.preventDefault();
             const cell = getCellFromEvent(e);
             if (!cell) return;
             touchState.isDown = true;
@@ -354,6 +356,7 @@
 
         function handleMouseMove(e) {
             if (!touchState.isDown) return;
+            e.preventDefault();
             touchState.isDragging = true;
             const cell = getCellFromEvent(e);
             if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
@@ -366,6 +369,7 @@
 
         function handleMouseUp(e) {
             if (!touchState.isDown) return;
+            e.preventDefault();
             if (touchState.isDragging) {
                 checkSelection();
                 clearSelectionHighlights();
@@ -378,37 +382,36 @@
 
         // --- TOUCH EVENT HANDLERS (REWRITTEN) ---
         function handleTouchStart(e) {
-            // Only handle single-finger touches for selection
             if (e.touches.length === 1) {
-                e.preventDefault(); // Prevent scrolling while selecting
-                const touch = e.touches[0];
-                const cell = getCellFromEvent(touch);
-                if (!cell) return;
-                
+                e.preventDefault();
                 touchState.isDown = true;
                 touchState.isDragging = false;
-                touchState.startTime = Date.now();
-                touchState.startPos = { x: touch.clientX, y: touch.clientY };
-                
-                selectionStart = cell;
-                selectionEnd = cell;
+                const touch = e.touches[0];
+                selectionStart = getCellFromEvent(touch);
+                selectionEnd = selectionStart;
+            } else if (e.touches.length === 2) {
+                touchState.isPanning = true;
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                touchState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+                touchState.scrollStart = { left: gridWrapper.scrollLeft, top: gridWrapper.scrollTop };
             }
         }
 
         function handleTouchMove(e) {
-            if (!touchState.isDown || e.touches.length !== 1) return;
-            e.preventDefault();
-
-            const touch = e.touches[0];
-            const dx = Math.abs(touch.clientX - touchState.startPos.x);
-            const dy = Math.abs(touch.clientY - touchState.startPos.y);
-
-            // If finger has moved a small amount, consider it a drag
-            if (dx > 5 || dy > 5) {
+            if (touchState.isPanning && e.touches.length === 2) {
+                e.preventDefault();
+                const t1 = e.touches[0];
+                const t2 = e.touches[1];
+                const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+                const dx = currentPan.x - touchState.panStart.x;
+                const dy = currentPan.y - touchState.panStart.y;
+                gridWrapper.scrollLeft = touchState.scrollStart.left - dx;
+                gridWrapper.scrollTop = touchState.scrollStart.top - dy;
+            } else if (touchState.isDown && e.touches.length === 1) {
+                e.preventDefault();
                 touchState.isDragging = true;
-            }
-            
-            if (touchState.isDragging) {
+                const touch = e.touches[0];
                 const cell = getCellFromEvent(touch);
                 if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                     selectionEnd = cell;
@@ -420,17 +423,16 @@
         }
 
         function handleTouchEnd(e) {
-            if (!touchState.isDown || e.changedTouches.length !== 1) return;
-            e.preventDefault();
-
-            if (touchState.isDragging) {
-                checkSelection();
-                clearSelectionHighlights();
-            } else {
-                // If it wasn't a drag, it was a tap
-                handleCellClick(selectionStart);
+            if (touchState.isPanning) {
+                touchState.isPanning = false;
+            } else if (touchState.isDown) {
+                if (touchState.isDragging) {
+                    checkSelection();
+                    clearSelectionHighlights();
+                } else {
+                    handleCellClick(selectionStart);
+                }
             }
-            // Reset state
             touchState.isDown = false;
             touchState.isDragging = false;
         }
@@ -579,8 +581,8 @@
         gridWrapper.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
-        gridWrapper.addEventListener('touchstart', handleTouchStart);
-        gridWrapper.addEventListener('touchmove', handleTouchMove);
+        gridWrapper.addEventListener('touchstart', handleTouchStart, { passive: false });
+        gridWrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
         gridWrapper.addEventListener('touchend', handleTouchEnd);
         gridWrapper.addEventListener('touchcancel', handleTouchEnd);
 
