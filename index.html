@@ -11,6 +11,7 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            /* Prevents pull-to-refresh and other default touch actions on the whole page */
             touch-action: manipulation;
         }
         .lora {
@@ -208,7 +209,7 @@
         let foundWords = new Set();
         let firstClickCell = null;
         
-        // FIX: Consolidated touch state management
+        // Consolidated touch state management
         let activeState = {
             isDown: false,
             isDragging: false,
@@ -243,6 +244,7 @@
             }
             if(!allWordsPlaced) {
                 console.error("Failed to place all words after multiple attempts.");
+                // Using a custom modal instead of alert would be a future improvement
                 alert("Error: Could not create the word search. Please try reloading.");
             }
 
@@ -337,14 +339,21 @@
             });
         }
         
-        function getCellFromEvent(touchOrMouseEvent) {
-            const target = touchOrMouseEvent.target;
-            const cellElement = target ? target.closest('.grid-cell') : null;
+        function getCellFromEvent(evt) {
+            const targetElement = document.elementFromPoint(evt.clientX, evt.clientY);
+
+            if (!targetElement) return null;
+
+            const cellElement = targetElement.closest('.grid-cell');
             if (!cellElement) return null;
-            return { row: parseInt(cellElement.dataset.row), col: parseInt(cellElement.dataset.col), element: cellElement };
+
+            return {
+                row: parseInt(cellElement.dataset.row),
+                col: parseInt(cellElement.dataset.col),
+                element: cellElement
+            };
         }
 
-        // --- MOUSE EVENT HANDLERS ---
         function handleMouseDown(e) {
             e.preventDefault();
             const cell = getCellFromEvent(e);
@@ -380,7 +389,6 @@
             activeState.isDragging = false;
         }
 
-        // --- TOUCH EVENT HANDLERS (REWRITTEN) ---
         function handleTouchStart(e) {
             if (e.touches.length === 1) {
                 e.preventDefault();
@@ -414,7 +422,7 @@
                 activeState.isDragging = true;
                 const touch = e.touches[0];
                 const cell = getCellFromEvent(touch);
-                if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
+                if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                     selectionEnd = cell;
                     clearFirstClickHighlight();
                     firstClickCell = null;
@@ -427,6 +435,11 @@
             if (activeState.isPanning) {
                 activeState.isPanning = false;
             } else if (activeState.isDown) {
+                if (!selectionStart) {
+                    activeState.isDown = false;
+                    activeState.isDragging = false;
+                    return;
+                }
                 if (activeState.isDragging) {
                     checkSelection();
                     clearSelectionHighlights();
