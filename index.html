@@ -208,11 +208,11 @@
         let foundWords = new Set();
         let firstClickCell = null;
         
-        let touchState = {
+        // FIX: Consolidated touch state management
+        let activeState = {
             isDown: false,
             isDragging: false,
             isPanning: false,
-            startPos: { x: 0, y: 0 },
             panStart: { x: 0, y: 0 },
             scrollStart: { left: 0, top: 0 },
         };
@@ -349,15 +349,15 @@
             e.preventDefault();
             const cell = getCellFromEvent(e);
             if (!cell) return;
-            touchState.isDown = true;
+            activeState.isDown = true;
             selectionStart = cell;
             selectionEnd = cell;
         }
 
         function handleMouseMove(e) {
-            if (!touchState.isDown) return;
+            if (!activeState.isDown) return;
             e.preventDefault();
-            touchState.isDragging = true;
+            activeState.isDragging = true;
             const cell = getCellFromEvent(e);
             if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                 selectionEnd = cell;
@@ -368,49 +368,50 @@
         }
 
         function handleMouseUp(e) {
-            if (!touchState.isDown) return;
+            if (!activeState.isDown) return;
             e.preventDefault();
-            if (touchState.isDragging) {
+            if (activeState.isDragging) {
                 checkSelection();
                 clearSelectionHighlights();
             } else {
                 handleCellClick(selectionStart);
             }
-            touchState.isDown = false;
-            touchState.isDragging = false;
+            activeState.isDown = false;
+            activeState.isDragging = false;
         }
 
         // --- TOUCH EVENT HANDLERS (REWRITTEN) ---
         function handleTouchStart(e) {
             if (e.touches.length === 1) {
                 e.preventDefault();
-                touchState.isDown = true;
-                touchState.isDragging = false;
+                activeState.isDown = true;
+                activeState.isDragging = false;
                 const touch = e.touches[0];
                 selectionStart = getCellFromEvent(touch);
                 selectionEnd = selectionStart;
             } else if (e.touches.length === 2) {
-                touchState.isPanning = true;
+                e.preventDefault();
+                activeState.isPanning = true;
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
-                touchState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-                touchState.scrollStart = { left: gridWrapper.scrollLeft, top: gridWrapper.scrollTop };
+                activeState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+                activeState.scrollStart = { left: gridWrapper.scrollLeft, top: gridWrapper.scrollTop };
             }
         }
 
         function handleTouchMove(e) {
-            if (touchState.isPanning && e.touches.length === 2) {
+            if (activeState.isPanning && e.touches.length === 2) {
                 e.preventDefault();
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-                const dx = currentPan.x - touchState.panStart.x;
-                const dy = currentPan.y - touchState.panStart.y;
-                gridWrapper.scrollLeft = touchState.scrollStart.left - dx;
-                gridWrapper.scrollTop = touchState.scrollStart.top - dy;
-            } else if (touchState.isDown && e.touches.length === 1) {
+                const dx = currentPan.x - activeState.panStart.x;
+                const dy = currentPan.y - activeState.panStart.y;
+                gridWrapper.scrollLeft = activeState.scrollStart.left - dx;
+                gridWrapper.scrollTop = activeState.scrollStart.top - dy;
+            } else if (activeState.isDown && e.touches.length === 1) {
                 e.preventDefault();
-                touchState.isDragging = true;
+                activeState.isDragging = true;
                 const touch = e.touches[0];
                 const cell = getCellFromEvent(touch);
                 if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
@@ -423,18 +424,18 @@
         }
 
         function handleTouchEnd(e) {
-            if (touchState.isPanning) {
-                touchState.isPanning = false;
-            } else if (touchState.isDown) {
-                if (touchState.isDragging) {
+            if (activeState.isPanning) {
+                activeState.isPanning = false;
+            } else if (activeState.isDown) {
+                if (activeState.isDragging) {
                     checkSelection();
                     clearSelectionHighlights();
                 } else {
                     handleCellClick(selectionStart);
                 }
             }
-            touchState.isDown = false;
-            touchState.isDragging = false;
+            activeState.isDown = false;
+            activeState.isDragging = false;
         }
 
         function handleCellClick(cell) {
@@ -591,4 +592,3 @@
 
 </body>
 </html>
-
