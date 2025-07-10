@@ -368,7 +368,7 @@
             e.preventDefault();
             activeState.isDragging = true;
             const cell = getCellFromEvent(e);
-            if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
+            if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                 selectionEnd = cell;
                 clearFirstClickHighlight();
                 firstClickCell = null;
@@ -389,35 +389,54 @@
             activeState.isDragging = false;
         }
 
+        // --- REVISED TOUCH EVENT HANDLERS ---
         function handleTouchStart(e) {
-            if (e.touches.length === 1) {
-                e.preventDefault();
-                activeState.isDown = true;
-                activeState.isDragging = false;
-                const touch = e.touches[0];
-                selectionStart = getCellFromEvent(touch);
-                selectionEnd = selectionStart;
-            } else if (e.touches.length === 2) {
+            // If it's a multi-touch, it's a pan. Cancel any selection attempt.
+            if (e.touches.length >= 2) {
                 e.preventDefault();
                 activeState.isPanning = true;
+                activeState.isDown = false; // Explicitly cancel selection state
+                activeState.isDragging = false;
+                clearSelectionHighlights(); // Clean up UI
+                clearFirstClickHighlight();
+                firstClickCell = null;
+    
+                // Setup for panning
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 activeState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
                 activeState.scrollStart = { left: gridWrapper.scrollLeft, top: gridWrapper.scrollTop };
+                return; // Exit
+            }
+    
+            // If it's a single touch
+            if (e.touches.length === 1) {
+                // Only act if we are not in the middle of a pan
+                if (!activeState.isPanning) {
+                     e.preventDefault();
+                    activeState.isDown = true;
+                    activeState.isDragging = false;
+                    const touch = e.touches[0];
+                    selectionStart = getCellFromEvent(touch);
+                    selectionEnd = selectionStart;
+                }
             }
         }
-
+    
         function handleTouchMove(e) {
-            if (activeState.isPanning && e.touches.length === 2) {
-                e.preventDefault();
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-                const dx = currentPan.x - activeState.panStart.x;
-                const dy = currentPan.y - activeState.panStart.y;
-                gridWrapper.scrollLeft = activeState.scrollStart.left - dx;
-                gridWrapper.scrollTop = activeState.scrollStart.top - dy;
-            } else if (activeState.isDown && e.touches.length === 1) {
+            // Prioritize panning
+            if (activeState.isPanning) {
+                if (e.touches.length >= 2) {
+                    e.preventDefault();
+                    const t1 = e.touches[0];
+                    const t2 = e.touches[1];
+                    const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
+                    const dx = currentPan.x - activeState.panStart.x;
+                    const dy = currentPan.y - activeState.panStart.y;
+                    gridWrapper.scrollLeft = activeState.scrollStart.left - dx;
+                    gridWrapper.scrollTop = activeState.scrollStart.top - dy;
+                }
+            } else if (activeState.isDown) { // Handle single-touch drag
                 e.preventDefault();
                 activeState.isDragging = true;
                 const touch = e.touches[0];
@@ -430,25 +449,27 @@
                 }
             }
         }
-
+    
         function handleTouchEnd(e) {
-            if (activeState.isPanning) {
+            // If the gesture is completely over (no fingers on screen)
+            if (e.touches.length === 0) {
+                // Check if the completed gesture was a selection, not a pan
+                if (activeState.isDown && !activeState.isPanning) {
+                    if (activeState.isDragging) {
+                        checkSelection();
+                        clearSelectionHighlights();
+                    } else {
+                        handleCellClick(selectionStart);
+                    }
+                }
+                // Full reset of all states
+                activeState.isDown = false;
+                activeState.isDragging = false;
                 activeState.isPanning = false;
-            } else if (activeState.isDown) {
-                if (!selectionStart) {
-                    activeState.isDown = false;
-                    activeState.isDragging = false;
-                    return;
-                }
-                if (activeState.isDragging) {
-                    checkSelection();
-                    clearSelectionHighlights();
-                } else {
-                    handleCellClick(selectionStart);
-                }
+            } else if (e.touches.length === 1) {
+                // This means one of two fingers was lifted. Pan is over.
+                activeState.isPanning = false;
             }
-            activeState.isDown = false;
-            activeState.isDragging = false;
         }
 
         function handleCellClick(cell) {
