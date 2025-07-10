@@ -23,8 +23,8 @@
             max-width: 100%;
             border: 1px solid #e5e7eb; /* Add a border to the scroll area */
             border-radius: 0.5rem;
-            /* Prevents default browser actions on the grid itself */
-            touch-action: none; 
+            /* FIX: Let the browser handle panning, but prevent default actions when a touch starts ON the grid */
+            touch-action: pan-x pan-y; 
         }
         #game-grid, #outline-container {
             width: 700px;
@@ -136,7 +136,7 @@
                     <p>Find all the Gevrey-Chambertin Premier Cru vineyards hidden in the grid. Words can be found horizontally, vertically, or diagonally, in any direction.</p>
                     
                     <div class="mt-4 p-3 bg-indigo-50 rounded-lg text-center text-base">
-                        <p><strong>Pro Tip for Mobile:</strong> Rotate your phone horizontally for a better view! Use two fingers to pan around the grid.</p>
+                        <p><strong>Pro Tip for Mobile:</strong> Rotate your phone horizontally for a better view! You can use the space around the grid to scroll.</p>
                     </div>
 
                     <div>
@@ -203,17 +203,18 @@
         const GRID_SIZE = 25;
         let grid = [];
         let words = [];
-        let isSelecting = false;
         let selectionStart = null;
         let selectionEnd = null;
         let foundWords = new Set();
         let firstClickCell = null;
-        let isPanning = false;
-        let panStart = { x: 0, y: 0 };
-        let scrollStart = { left: 0, top: 0 };
-        // FIX: Add state for tap vs drag detection
-        let touchStartPos = { x: 0, y: 0 };
-        let touchStartTime = 0;
+        
+        // FIX: Reworked state management for touch
+        let touchState = {
+            isDown: false,
+            isDragging: false,
+            startPos: { x: 0, y: 0 },
+            startTime: 0
+        };
 
         function sanitizeWord(word) {
             const normalized = word.term.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -344,17 +345,16 @@
 
         // --- MOUSE EVENT HANDLERS ---
         function handleMouseDown(e) {
-            e.preventDefault();
             const cell = getCellFromEvent(e);
             if (!cell) return;
-            isSelecting = true;
+            touchState.isDown = true;
             selectionStart = cell;
             selectionEnd = cell;
         }
 
         function handleMouseMove(e) {
-            if (!isSelecting) return;
-            e.preventDefault();
+            if (!touchState.isDown) return;
+            touchState.isDragging = true;
             const cell = getCellFromEvent(e);
             if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                 selectionEnd = cell;
@@ -365,49 +365,50 @@
         }
 
         function handleMouseUp(e) {
-            if (!isSelecting) return;
-            e.preventDefault();
-            isSelecting = false;
-            const isDrag = selectionStart && selectionEnd && (selectionStart.row !== selectionEnd.row || selectionStart.col !== selectionEnd.col);
-            if (isDrag) {
+            if (!touchState.isDown) return;
+            if (touchState.isDragging) {
                 checkSelection();
                 clearSelectionHighlights();
-            } else if (selectionStart) {
+            } else {
                 handleCellClick(selectionStart);
             }
+            touchState.isDown = false;
+            touchState.isDragging = false;
         }
 
         // --- TOUCH EVENT HANDLERS (REWRITTEN) ---
         function handleTouchStart(e) {
-            e.preventDefault(); // Prevent default actions immediately
+            // Only handle single-finger touches for selection
             if (e.touches.length === 1) {
+                e.preventDefault(); // Prevent scrolling while selecting
                 const touch = e.touches[0];
                 const cell = getCellFromEvent(touch);
                 if (!cell) return;
-
-                isSelecting = true;
+                
+                touchState.isDown = true;
+                touchState.isDragging = false;
+                touchState.startTime = Date.now();
+                touchState.startPos = { x: touch.clientX, y: touch.clientY };
+                
                 selectionStart = cell;
                 selectionEnd = cell;
-                touchStartPos = { x: touch.clientX, y: touch.clientY };
-                touchStartTime = Date.now();
-
-            } else if (e.touches.length === 2) {
-                isSelecting = false;
-                clearSelectionHighlights();
-                isPanning = true;
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                panStart.x = (t1.clientX + t2.clientX) / 2;
-                panStart.y = (t1.clientY + t2.clientY) / 2;
-                scrollStart.left = gridWrapper.scrollLeft;
-                scrollStart.top = gridWrapper.scrollTop;
             }
         }
 
         function handleTouchMove(e) {
+            if (!touchState.isDown || e.touches.length !== 1) return;
             e.preventDefault();
-            if (e.touches.length === 1 && isSelecting) {
-                const touch = e.touches[0];
+
+            const touch = e.touches[0];
+            const dx = Math.abs(touch.clientX - touchState.startPos.x);
+            const dy = Math.abs(touch.clientY - touchState.startPos.y);
+
+            // If finger has moved a small amount, consider it a drag
+            if (dx > 5 || dy > 5) {
+                touchState.isDragging = true;
+            }
+            
+            if (touchState.isDragging) {
                 const cell = getCellFromEvent(touch);
                 if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                     selectionEnd = cell;
@@ -415,46 +416,30 @@
                     firstClickCell = null;
                     highlightSelection();
                 }
-            } else if (e.touches.length === 2 && isPanning) {
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
-                const dx = currentPan.x - panStart.x;
-                const dy = currentPan.y - panStart.y;
-                gridWrapper.scrollLeft = scrollStart.left - dx;
-                gridWrapper.scrollTop = scrollStart.top - dy;
             }
         }
 
         function handleTouchEnd(e) {
+            if (!touchState.isDown || e.changedTouches.length !== 1) return;
             e.preventDefault();
-            if (isPanning) {
-                isPanning = false;
-                return;
-            }
-            if (!isSelecting) return;
 
-            const touch = e.changedTouches[0];
-            const dx = Math.abs(touch.clientX - touchStartPos.x);
-            const dy = Math.abs(touch.clientY - touchStartPos.y);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            const elapsedTime = Date.now() - touchStartTime;
-
-            // Treat as a tap if it's short and didn't move much
-            if (dist < 10 && elapsedTime < 200) {
-                 handleCellClick(selectionStart);
-            } else { // Treat as a drag
+            if (touchState.isDragging) {
                 checkSelection();
                 clearSelectionHighlights();
+            } else {
+                // If it wasn't a drag, it was a tap
+                handleCellClick(selectionStart);
             }
-            
-            isSelecting = false;
+            // Reset state
+            touchState.isDown = false;
+            touchState.isDragging = false;
         }
 
         function handleCellClick(cell) {
+            if (!cell) return;
             if (!firstClickCell) {
                 firstClickCell = cell;
-                cell.element.classList.add('first-click');
+                if (cell.element) cell.element.classList.add('first-click');
             } else {
                 selectionStart = firstClickCell;
                 selectionEnd = cell;
@@ -484,6 +469,7 @@
 
         function getCellsBetween(start, end) {
             const cells = [];
+            if (!start || !end) return cells;
             let { row: r1, col: c1 } = start;
             let { row: r2, col: c2 } = end;
             const dx = Math.abs(c2 - c1), dy = Math.abs(r2 - r1);
