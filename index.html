@@ -208,7 +208,6 @@
         let selectionEnd = null;
         let foundWords = new Set();
         let firstClickCell = null;
-        // FIX: New state variables for two-finger panning
         let isPanning = false;
         let panStart = { x: 0, y: 0 };
         let scrollStart = { left: 0, top: 0 };
@@ -333,11 +332,8 @@
             });
         }
         
-        function getCellFromEvent(e) {
-            let target;
-            // For touch, we need to check the first touch point
-            if (e.touches && e.touches.length > 0) target = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-            else target = e.target;
+        function getCellFromEvent(touchOrMouseEvent) {
+            const target = touchOrMouseEvent.target;
             const cellElement = target ? target.closest('.grid-cell') : null;
             if (!cellElement) return null;
             return { row: parseInt(cellElement.dataset.row), col: parseInt(cellElement.dataset.col), element: cellElement };
@@ -381,7 +377,12 @@
         // --- TOUCH EVENT HANDLERS (WITH 2-FINGER PAN) ---
         function handleTouchStart(e) {
             if (e.touches.length === 1) {
-                handleMouseDown(e.touches[0]);
+                e.preventDefault(); // Prevent default actions like mouse event emulation
+                const cell = getCellFromEvent(e.touches[0]);
+                if (!cell) return;
+                isSelecting = true;
+                selectionStart = cell;
+                selectionEnd = cell;
             } else if (e.touches.length === 2) {
                 isSelecting = false;
                 clearSelectionHighlights();
@@ -397,9 +398,16 @@
 
         function handleTouchMove(e) {
             if (e.touches.length === 1 && isSelecting) {
-                handleMouseMove(e.touches[0]);
+                e.preventDefault();
+                const cell = getCellFromEvent(e.touches[0]);
+                if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
+                    selectionEnd = cell;
+                    clearFirstClickHighlight();
+                    firstClickCell = null;
+                    highlightSelection();
+                }
             } else if (e.touches.length === 2 && isPanning) {
-                e.preventDefault(); // Prevent page scroll during pan
+                e.preventDefault();
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
@@ -411,10 +419,21 @@
         }
 
         function handleTouchEnd(e) {
-            if (isSelecting) {
-                handleMouseUp(e);
+            if (isPanning) {
+                isPanning = false;
+                return;
             }
-            isPanning = false;
+            if (!isSelecting) return;
+            e.preventDefault();
+            isSelecting = false;
+            const isDrag = selectionStart && selectionEnd && (selectionStart.row !== selectionEnd.row || selectionStart.col !== selectionEnd.col);
+
+            if (isDrag) {
+                checkSelection();
+                clearSelectionHighlights();
+            } else if (selectionStart) {
+                handleCellClick(selectionStart);
+            }
         }
 
         function handleCellClick(cell) {
