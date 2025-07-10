@@ -145,6 +145,7 @@
                         <ul class="list-disc list-inside mt-2 space-y-1">
                             <li><strong>Click & Drag:</strong> Click the first letter and drag your cursor to the last letter.</li>
                             <li><strong>Click, Click:</strong> Click the first letter, then click the last letter.</li>
+                            <li><strong>NEW:</strong> You can now pan with two fingers between the first and second click!</li>
                         </ul>
                     </div>
                 </div>
@@ -388,15 +389,16 @@
 
         // --- REVISED AND FIXED TOUCH EVENT HANDLERS ---
         function handleTouchStart(e) {
+            // If a pan starts, just set the panning state.
+            // Do NOT clear the firstClickCell. This allows panning after a first click.
             if (e.touches.length >= 2) {
                 e.preventDefault();
                 activeState.isPanning = true;
+                // Cancel any ongoing single-finger drag selection
                 activeState.isDown = false; 
                 activeState.isDragging = false;
-                clearSelectionHighlights();
-                clearFirstClickHighlight();
-                firstClickCell = null;
-    
+                clearSelectionHighlights(); // Clear any visual drag highlight
+
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 activeState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
@@ -404,6 +406,7 @@
                 return;
             }
     
+            // Only process single touches if not in the middle of a pan
             if (e.touches.length === 1 && !activeState.isPanning) {
                 e.preventDefault();
                 activeState.isDown = true;
@@ -477,6 +480,13 @@
 
         function handleCellClick(cell) {
             if (!cell) return;
+            // If the clicked cell is already the first click, deselect it.
+            if (firstClickCell && firstClickCell.row === cell.row && firstClickCell.col === cell.col) {
+                clearFirstClickHighlight();
+                firstClickCell = null;
+                return;
+            }
+
             if (!firstClickCell) {
                 firstClickCell = cell;
                 if (cell.element) cell.element.classList.add('first-click');
