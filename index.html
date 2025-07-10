@@ -211,6 +211,9 @@
         let isPanning = false;
         let panStart = { x: 0, y: 0 };
         let scrollStart = { left: 0, top: 0 };
+        // FIX: Add state for tap vs drag detection
+        let touchStartPos = { x: 0, y: 0 };
+        let touchStartTime = 0;
 
         function sanitizeWord(word) {
             const normalized = word.term.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -374,15 +377,20 @@
             }
         }
 
-        // --- TOUCH EVENT HANDLERS (WITH 2-FINGER PAN) ---
+        // --- TOUCH EVENT HANDLERS (REWRITTEN) ---
         function handleTouchStart(e) {
+            e.preventDefault(); // Prevent default actions immediately
             if (e.touches.length === 1) {
-                e.preventDefault(); // Prevent default actions like mouse event emulation
-                const cell = getCellFromEvent(e.touches[0]);
+                const touch = e.touches[0];
+                const cell = getCellFromEvent(touch);
                 if (!cell) return;
+
                 isSelecting = true;
                 selectionStart = cell;
                 selectionEnd = cell;
+                touchStartPos = { x: touch.clientX, y: touch.clientY };
+                touchStartTime = Date.now();
+
             } else if (e.touches.length === 2) {
                 isSelecting = false;
                 clearSelectionHighlights();
@@ -397,9 +405,10 @@
         }
 
         function handleTouchMove(e) {
+            e.preventDefault();
             if (e.touches.length === 1 && isSelecting) {
-                e.preventDefault();
-                const cell = getCellFromEvent(e.touches[0]);
+                const touch = e.touches[0];
+                const cell = getCellFromEvent(touch);
                 if (cell && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
                     selectionEnd = cell;
                     clearFirstClickHighlight();
@@ -407,7 +416,6 @@
                     highlightSelection();
                 }
             } else if (e.touches.length === 2 && isPanning) {
-                e.preventDefault();
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 const currentPan = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
@@ -419,21 +427,28 @@
         }
 
         function handleTouchEnd(e) {
+            e.preventDefault();
             if (isPanning) {
                 isPanning = false;
                 return;
             }
             if (!isSelecting) return;
-            e.preventDefault();
-            isSelecting = false;
-            const isDrag = selectionStart && selectionEnd && (selectionStart.row !== selectionEnd.row || selectionStart.col !== selectionEnd.col);
 
-            if (isDrag) {
+            const touch = e.changedTouches[0];
+            const dx = Math.abs(touch.clientX - touchStartPos.x);
+            const dy = Math.abs(touch.clientY - touchStartPos.y);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            const elapsedTime = Date.now() - touchStartTime;
+
+            // Treat as a tap if it's short and didn't move much
+            if (dist < 10 && elapsedTime < 200) {
+                 handleCellClick(selectionStart);
+            } else { // Treat as a drag
                 checkSelection();
                 clearSelectionHighlights();
-            } else if (selectionStart) {
-                handleCellClick(selectionStart);
             }
+            
+            isSelecting = false;
         }
 
         function handleCellClick(cell) {
@@ -578,8 +593,8 @@
         gridWrapper.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
-        gridWrapper.addEventListener('touchstart', handleTouchStart, { passive: false });
-        gridWrapper.addEventListener('touchmove', handleTouchMove, { passive: false });
+        gridWrapper.addEventListener('touchstart', handleTouchStart);
+        gridWrapper.addEventListener('touchmove', handleTouchMove);
         gridWrapper.addEventListener('touchend', handleTouchEnd);
         gridWrapper.addEventListener('touchcancel', handleTouchEnd);
 
