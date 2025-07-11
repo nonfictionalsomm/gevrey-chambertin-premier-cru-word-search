@@ -202,6 +202,7 @@
         ];
         
         const GRID_SIZE = 25;
+        const DRAG_THRESHOLD = 10; // Pixels a finger must move to be considered a drag
         let grid = [];
         let words = [];
         let selectionStart = null;
@@ -216,6 +217,7 @@
             isPanning: false,
             panStart: { x: 0, y: 0 },
             scrollStart: { left: 0, top: 0 },
+            touchStartCoords: { x: 0, y: 0 }
         };
 
         function sanitizeWord(word) {
@@ -244,7 +246,6 @@
             }
             if(!allWordsPlaced) {
                 console.error("Failed to place all words after multiple attempts.");
-                // Using a custom modal instead of alert would be a future improvement
                 alert("Error: Could not create the word search. Please try reloading.");
             }
 
@@ -407,10 +408,11 @@
     
             if (e.touches.length === 1) {
                 if (!activeState.isPanning) {
-                     e.preventDefault();
+                    e.preventDefault();
                     activeState.isDown = true;
                     activeState.isDragging = false;
                     const touch = e.touches[0];
+                    activeState.touchStartCoords = { x: touch.clientX, y: touch.clientY };
                     selectionStart = getCellFromEvent(touch);
                     selectionEnd = selectionStart;
                 }
@@ -429,14 +431,24 @@
                 gridWrapper.scrollTop = activeState.scrollStart.top - dy;
             } else if (activeState.isDown && !activeState.isPanning) { 
                 e.preventDefault();
-                activeState.isDragging = true;
                 const touch = e.touches[0];
-                const cell = getCellFromEvent(touch);
-                if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
-                    selectionEnd = cell;
-                    clearFirstClickHighlight();
-                    firstClickCell = null;
-                    highlightSelection();
+
+                if (!activeState.isDragging) {
+                    const dx = touch.clientX - activeState.touchStartCoords.x;
+                    const dy = touch.clientY - activeState.touchStartCoords.y;
+                    if (Math.hypot(dx, dy) > DRAG_THRESHOLD) {
+                        activeState.isDragging = true;
+                        clearFirstClickHighlight();
+                        firstClickCell = null;
+                    }
+                }
+
+                if (activeState.isDragging) {
+                    const cell = getCellFromEvent(touch);
+                    if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
+                        selectionEnd = cell;
+                        highlightSelection();
+                    }
                 }
             }
         }
