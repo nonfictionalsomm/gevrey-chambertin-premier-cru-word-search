@@ -28,8 +28,8 @@
             touch-action: pan-x pan-y; 
         }
         #game-grid, #outline-container {
-            width: 700px;
-            height: 700px;
+            width: 100%;
+            height: 100%;
             position: absolute;
             top: 0;
             left: 0;
@@ -145,7 +145,6 @@
                         <ul class="list-disc list-inside mt-2 space-y-1">
                             <li><strong>Click & Drag:</strong> Click the first letter and drag your cursor to the last letter.</li>
                             <li><strong>Click, Click:</strong> Click the first letter, then click the last letter.</li>
-                            <li><strong>NEW:</strong> You can now pan with two fingers between the first and second click!</li>
                         </ul>
                     </div>
                 </div>
@@ -199,7 +198,7 @@
         const startGameBtn = document.getElementById('start-game-btn');
 
         const wordData = [
-            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze", origin: "Closeau comes from clos." } }, { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy", origin: "Derived from combe, meaning valley." } }, { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume", origin: "Bel stems from Latin *bellus* (beautiful), referencing the site's pure air." } }, { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot", origin: "Champ = field; Ponnet’s field." } }, { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot", origin: "From Latin *caribaudia* (cemetery); possibly Gevrey’s first burial site." } }, { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)", origin: "Varoilles means small valley." } }, { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)", origin: "Formerly owned by the Diocese of Langres (Chapitre)." } }, { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy", origin: "Belonged to a prieur—linked to Cluny Abbey." } }, { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin", origin: "Named for a statue of Saint James guiding pilgrims." } }, { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot", origin: "Combines *crai* (chalk) and *pillot* (stone)." } }, { term: "Ergot", info: { size: "1.16 ha", producers: "No producers label En Ergot alone, however Denis Mortet bottles it as 1er.", origin: "Refers to the pointed, spur-like shape of the climat." } }, { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin", origin: "Estournelles were towered fortifications." } }, { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty", origin: "Shares roots with *fountain*." } }, { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)", origin: "From *essarter*—to clear forest." } }, { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)", origin: "Boissière = bush." } }, { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier", origin: "Valley owned by Benedictines of Cluny until the Revolution." } }, { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy", origin: "Named for quarry worker (*perrier*)." } }, { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)", origin: "Evokes Roman viticulture; linked to Gevrey’s *rue des Vignes Romaines*." } }, { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat", origin: "Lavaux stems from Latin *vallis* (valley)." } }, { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot", origin: "From Latin *castellum* (fortress)." } }, { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet", origin: "Champeaux = meadow." } }, { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet", origin: "Corbeau = raven." } }, { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier", origin: "From *goule* (stream); *gouléyant* now implies diluted wine." } }, { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Domaine Dominique Gallois", origin: "Smaller parcel north of Cazetiers; name from Latin *castellum* (fortress). May be blended with Cazetiers." } }, { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot", origin: "Lies just below Chapelle-Chambertin." } }, { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot", origin: "Poissonet means fish pond." } }
+            { term: "Au-Closeau", info: { size: "0.53 ha", producers: "Drouhin-Laroze", origin: "Closeau comes from clos." } }, { term: "Combottes", info: { size: "4.57 ha", producers: "Dujac, Leroy", origin: "Derived from combe, meaning valley." } }, { term: "Bel Air", info: { size: "2.65 ha", producers: "de la Vougeraie, Taupenot-Maume", origin: "Bel stems from Latin *bellus* (beautiful), referencing the site's pure air." } }, { term: "Champonnet", info: { size: "3.32 ha", producers: "Domaine des Varoilles, Esmonin, Louis Boillot", origin: "Champ = field; Ponnet’s field." } }, { term: "Cherbaudes", info: { size: "2.18 ha", producers: "Fourrier, Louis Boillot", origin: "From Latin *caribaudia* (cemetery); possibly Gevrey’s first burial site." } }, { term: "Clos des Varoilles", info: { size: "5.97 ha", producers: "Domaine des Varoilles (monopole)", origin: "Varoilles means small valley." } }, { term: "Clos du Chapitre", info: { size: "1.00 ha", producers: "Nuiton Beaunoy (Cave des Hautes-Côtes) (monopole)", origin: "Formerly owned by the Diocese of Langres (Chapitre)." } }, { term: "Clos Prieur", info: { size: "1.98 ha", producers: "Rossignol-Trapet, Harmand-Geoffroy", origin: "Belonged to a prieur—linked to Cluny Abbey." } }, { term: "Clos Saint Jacques", info: { size: "6.70 ha", producers: "Armand Rousseau, Bruno Clair, Fourrier, Louis Jadot, Sylvie Esmonin", origin: "Named for a statue of Saint James guiding pilgrims." } }, { term: "Craipillot", info: { size: "2.76 ha", producers: "Drouhin-Laroze, Confuron-Cotétidot", origin: "Combines *crai* (chalk) and *pillot* (stone)." } }, { term: "Ergot", info: { size: "1.16 ha", producers: "No producer currently labels only En Ergot, Denis Mortet bottles it 1er.", origin: "Refers to the pointed, spur-like shape of the climat." } }, { term: "Estournelles Saint Jacques", info: { size: "2.09 ha", producers: "Frédéric Esmonin", origin: "Estournelles were towered fortifications." } }, { term: "Fonteny", info: { size: "3.73 ha", producers: "Bruno Clair, Rebourseau, Joseph Roty", origin: "Shares roots with *fountain*." } }, { term: "Issarts", info: { size: "0.62 ha", producers: "Domaine Faiveley (monopole since 2002)", origin: "From *essarter*—to clear forest." } }, { term: "Boissière", info: { size: "0.45 ha", producers: "Harmand-Geoffroy (monopole)", origin: "Boissière = bush." } }, { term: "Combe au Moine", info: { size: "4.77 ha", producers: "Faiveley, Fourrier", origin: "Valley owned by Benedictines of Cluny until the Revolution." } }, { term: "Perrière", info: { size: "2.47 ha", producers: "Harmand-Geoffroy", origin: "Named for quarry worker (*perrier*)." } }, { term: "Romanée", info: { size: "1.06 ha", producers: "Domaine des Varoilles (monopole)", origin: "Evokes Roman viticulture; linked to Gevrey’s *rue des Vignes Romaines*." } }, { term: "Lavaux-Saint-Jacques", info: { size: "9.53 ha", producers: "Dugat-Py, Denis Mortet, Dupont Tisserandot, Claude Dugat", origin: "Lavaux stems from Latin *vallis* (valley)." } }, { term: "Cazetiers", info: { size: "8.43 ha", producers: "Bruno Clair, A. Rousseau, Jadot", origin: "From Latin *castellum* (fortress)." } }, { term: "Champeaux", info: { size: "6.68 ha", producers: "Fourrier, Denis Mortet", origin: "Champeaux = meadow." } }, { term: "Corbeaux", info: { size: "3.21 ha", producers: "Denis Bachelet", origin: "Corbeau = raven." } }, { term: "Goulots", info: { size: "1.81 ha", producers: "Fourrier", origin: "From *goule* (stream); *gouléyant* now implies diluted wine." } }, { term: "Petits Cazetiers", info: { size: "0.45 ha", producers: "Dominique Gallois", origin: "Smaller parcel north of Cazetiers; name from Latin *castellum* (fortress). May be blended with Cazetiers." } }, { term: "Petite Chapelle", info: { size: "4.0 ha", producers: "Dugat-Py, Dupont-Tisserandot", origin: "Lies just below Chapelle-Chambertin." } }, { term: "Poissenot", info: { size: "2.20 ha", producers: "Geantet-Pansiot, Jadot", origin: "Poissonet means fish pond." } }
         ];
         
         const GRID_SIZE = 25;
@@ -210,14 +209,13 @@
         let foundWords = new Set();
         let firstClickCell = null;
         
-        // Consolidated state management for mouse and touch
+        // Consolidated touch state management
         let activeState = {
             isDown: false,
             isDragging: false,
             isPanning: false,
             panStart: { x: 0, y: 0 },
             scrollStart: { left: 0, top: 0 },
-            touchStartCoords: { x: 0, y: 0 } // For drag threshold
         };
 
         function sanitizeWord(word) {
@@ -246,6 +244,7 @@
             }
             if(!allWordsPlaced) {
                 console.error("Failed to place all words after multiple attempts.");
+                // Using a custom modal instead of alert would be a future improvement
                 alert("Error: Could not create the word search. Please try reloading.");
             }
 
@@ -342,9 +341,12 @@
         
         function getCellFromEvent(evt) {
             const targetElement = document.elementFromPoint(evt.clientX, evt.clientY);
+
             if (!targetElement) return null;
+
             const cellElement = targetElement.closest('.grid-cell');
             if (!cellElement) return null;
+
             return {
                 row: parseInt(cellElement.dataset.row),
                 col: parseInt(cellElement.dataset.col),
@@ -387,38 +389,42 @@
             activeState.isDragging = false;
         }
 
-        // --- REVISED AND FIXED TOUCH EVENT HANDLERS ---
+        // --- REVISED TOUCH EVENT HANDLERS ---
         function handleTouchStart(e) {
-            // If a pan starts, just set the panning state.
-            // Do NOT clear the firstClickCell. This allows panning after a first click.
+            // If it's a multi-touch, it's a pan. Cancel any selection attempt.
             if (e.touches.length >= 2) {
                 e.preventDefault();
                 activeState.isPanning = true;
-                // Cancel any ongoing single-finger drag selection
-                activeState.isDown = false; 
+                activeState.isDown = false; // Explicitly cancel selection state
                 activeState.isDragging = false;
-                clearSelectionHighlights(); // Clear any visual drag highlight
-
+                clearSelectionHighlights(); // Clean up UI
+                clearFirstClickHighlight();
+                firstClickCell = null;
+    
+                // Setup for panning
                 const t1 = e.touches[0];
                 const t2 = e.touches[1];
                 activeState.panStart = { x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 };
                 activeState.scrollStart = { left: gridWrapper.scrollLeft, top: gridWrapper.scrollTop };
-                return;
+                return; // Exit
             }
     
-            // Only process single touches if not in the middle of a pan
-            if (e.touches.length === 1 && !activeState.isPanning) {
-                e.preventDefault();
-                activeState.isDown = true;
-                activeState.isDragging = false;
-                const touch = e.touches[0];
-                selectionStart = getCellFromEvent(touch);
-                selectionEnd = selectionStart;
-                activeState.touchStartCoords = { x: touch.clientX, y: touch.clientY }; 
+            // If it's a single touch
+            if (e.touches.length === 1) {
+                // Only act if we are not in the middle of a pan
+                if (!activeState.isPanning) {
+                     e.preventDefault();
+                    activeState.isDown = true;
+                    activeState.isDragging = false;
+                    const touch = e.touches[0];
+                    selectionStart = getCellFromEvent(touch);
+                    selectionEnd = selectionStart;
+                }
             }
         }
     
         function handleTouchMove(e) {
+            // Prioritize panning
             if (activeState.isPanning) {
                 if (e.touches.length >= 2) {
                     e.preventDefault();
@@ -430,38 +436,24 @@
                     gridWrapper.scrollLeft = activeState.scrollStart.left - dx;
                     gridWrapper.scrollTop = activeState.scrollStart.top - dy;
                 }
-                return;
-            }
-            
-            if (activeState.isDown) {
+            } else if (activeState.isDown) { // Handle single-touch drag
                 e.preventDefault();
+                activeState.isDragging = true;
                 const touch = e.touches[0];
-
-                // Check for drag threshold only if not already dragging
-                if (!activeState.isDragging) {
-                    const dx = touch.clientX - activeState.touchStartCoords.x;
-                    const dy = touch.clientY - activeState.touchStartCoords.y;
-                    const distance = Math.sqrt(dx*dx + dy*dy);
-                    if (distance > 10) { // 10px threshold
-                        activeState.isDragging = true;
-                    }
-                }
-
-                // If dragging, update selection
-                if (activeState.isDragging) {
-                    const cell = getCellFromEvent(touch);
-                    if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
-                        selectionEnd = cell;
-                        clearFirstClickHighlight();
-                        firstClickCell = null;
-                        highlightSelection();
-                    }
+                const cell = getCellFromEvent(touch);
+                if (cell && selectionEnd && (cell.row !== selectionEnd.row || cell.col !== selectionEnd.col)) {
+                    selectionEnd = cell;
+                    clearFirstClickHighlight();
+                    firstClickCell = null;
+                    highlightSelection();
                 }
             }
         }
     
         function handleTouchEnd(e) {
+            // If the gesture is completely over (no fingers on screen)
             if (e.touches.length === 0) {
+                // Check if the completed gesture was a selection, not a pan
                 if (activeState.isDown && !activeState.isPanning) {
                     if (activeState.isDragging) {
                         checkSelection();
@@ -470,23 +462,18 @@
                         handleCellClick(selectionStart);
                     }
                 }
+                // Full reset of all states
                 activeState.isDown = false;
                 activeState.isDragging = false;
                 activeState.isPanning = false;
             } else if (e.touches.length === 1) {
+                // This means one of two fingers was lifted. Pan is over.
                 activeState.isPanning = false;
             }
         }
 
         function handleCellClick(cell) {
             if (!cell) return;
-            // If the clicked cell is already the first click, deselect it.
-            if (firstClickCell && firstClickCell.row === cell.row && firstClickCell.col === cell.col) {
-                clearFirstClickHighlight();
-                firstClickCell = null;
-                return;
-            }
-
             if (!firstClickCell) {
                 firstClickCell = cell;
                 if (cell.element) cell.element.classList.add('first-click');
@@ -639,4 +626,3 @@
 
 </body>
 </html>
-
